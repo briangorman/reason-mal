@@ -1,2 +1,7 @@
+(env
+ (dev
+  (flags (:standard -warn-error -A))))
+
 (executable
-    (name lisp))
+ (name lisp)
+ (libraries pcre))
