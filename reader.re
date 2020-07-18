@@ -8,7 +8,7 @@ let malRegex =
 let read_atom = token => {
   switch (int_of_string_opt(token)) {
   | Some(i) => MalAtom(MalInteger(i))
-  | None => MalAtom(MalSymbol(token));
+  | None => MalAtom(MalSymbol(token))
   };
 };
 
@@ -18,7 +18,7 @@ let rec read_form = readerObj =>
   | atom => read_atom(atom)
   }
 and read_list = readerObj => {
-  let rec accumulator = (lst) => {
+  let rec accumulator = lst => {
     let x = readerObj#peek();
     print_endline(x);
     switch (readerObj#peek()) {
@@ -29,7 +29,7 @@ and read_list = readerObj => {
       accumulator(newAst);
     };
   };
-  assert(readerObj#next() == "(")
+  assert(readerObj#next() == "(");
   accumulator([]);
 };
 
@@ -43,6 +43,7 @@ let read_str = str => {
   let tokens = tokenize(str);
   let index = ref(0);
   let reader = {
+    as _;
     pub next = () => {
       let currentToken = tokens[index^];
       index := index^ + 1;
