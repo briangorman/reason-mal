@@ -9,7 +9,7 @@ list: iterate through each element of the list calling pr_str on it, then join t
 open Types;
 
 let rec pr_str = form => switch (form) {
-  | MalAtom(MalInteger(i)) => string_of_int(i)
-  | MalAtom(MalSymbol(s)) => s
+  | MalInteger(i) => string_of_int(i)
+  | MalSymbol(s) => s
   | MalList(lst) => ["(", (List.map(pr_str, lst) |> String.concat(" ")), ")"  ] |> String.concat("")
 }
