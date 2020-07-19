@@ -7,8 +7,8 @@ let malRegex =
 
 let read_atom = token => {
   switch (int_of_string_opt(token)) {
-  | Some(i) => MalInteger(i)
-  | None => MalSymbol(token)
+  | Some(i) => Integer(i)
+  | None => Symbol(token)
   };
 };
 
@@ -20,7 +20,7 @@ let rec read_form = readerObj =>
 and read_list = readerObj => {
   let rec accumulator = lst => {
     switch (readerObj#peek()) {
-    | ")" => MalList(lst)
+    | ")" => List(lst)
     | _form =>
       let newAst = List.append(lst, [read_form(readerObj)]);
       readerObj#next() |> ignore;

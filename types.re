@@ -1,5 +1,5 @@
 type malType =
-  | MalList(list(malType))
-  | MalSymbol(string)
-  | MalInteger(int)
-  | MalFn(list(malType) => malType);
+  | List(list(malType))
+  | Symbol(string)
+  | Integer(int)
+  | Fn(list(malType) => malType);
