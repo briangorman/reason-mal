@@ -1,8 +1,6 @@
 open Types;
 
-module M = Map.Make(String);
-
-exception Failure;
+exception Failure(string);
 
 let numFun = (f, args) => {
   switch (args) {
@@ -11,35 +9,55 @@ let numFun = (f, args) => {
   };
 };
 
-let repl_env =
-  M.empty
-  |> M.add("+", Fn(numFun((+))))
-  |> M.add("-", Fn(numFun((-))))
-  |> M.add("/", Fn(numFun((/))))
-  |> M.add("*", Fn(numFun(( * ))));
+let repl_env = Env.makeEnv(None);
 
+repl_env#set("+", Fn(numFun((+))));
+repl_env#set("-", Fn(numFun((-))));
+repl_env#set("/", Fn(numFun((/))));
+repl_env#set("*", Fn(numFun(( * ))));
 
 let read = str => Reader.read_str(str);
 
 let rec eval = (ast, repl_env) => {
   switch (ast) {
   | List([]) => ast
+  | List([Symbol("def!"), Symbol(k), expr]) =>
+    let value = eval(expr, repl_env);
+    repl_env#set(k, value);
+    value;
+  | List([Symbol("let*"), List(bindings), body]) =>
+    let newEnv = createEnvWithBindings(bindings, repl_env);
+    eval(body, newEnv);
   | List(_) =>
     switch (eval_ast(ast, repl_env)) {
     | List([Fn(fn), ...args]) => fn(args)
-    | _ => raise(Failure)
+    | _ => raise(Failure("Function not in first position in apply phase"))
     }
-  | Fn(_) => raise(Failure);
+  | Fn(_) => raise(Failure("Function not evaluated correctly"))
   | Integer(_) => eval_ast(ast, repl_env)
   | Symbol(_) => eval_ast(ast, repl_env)
   };
 }
 and eval_ast = (ast, repl_env) => {
   switch (ast) {
-  | Symbol(s) => M.find(s, repl_env)
+  | Symbol(s) => repl_env#get(s)
   | List(lst) => List(List.map(ast => eval(ast, repl_env), lst))
   | _ => ast
   };
+}
+and createEnvWithBindings = (bindings, oldEnv) => {
+  let newEnv = Env.makeEnv(Some(oldEnv));
+
+  let rec acc = lst =>
+    switch (lst) {
+    | [Symbol(key), expr, ...rest] =>
+      newEnv#set(key, eval(expr, newEnv));
+      acc(rest);
+    | [] => ()
+    | _ => raise(Failure("let* bindings require an even number of forms"))
+    };
+  acc(bindings);
+  newEnv;
 };
 
 let print = form => Printer.pr_str(form);
