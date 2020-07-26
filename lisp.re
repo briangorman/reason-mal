@@ -33,9 +33,7 @@ let rec eval = (ast, repl_env) => {
     | List([Fn(fn), ...args]) => fn(args)
     | _ => raise(Failure("Function not in first position in apply phase"))
     }
-  | Fn(_) => raise(Failure("Function not evaluated correctly"))
-  | Integer(_) => eval_ast(ast, repl_env)
-  | Symbol(_) => eval_ast(ast, repl_env)
+  | _ => eval_ast(ast, repl_env)
   };
 }
 and eval_ast = (ast, repl_env) => {
@@ -68,7 +66,11 @@ let rec main = () => {
   print_string("user> ");
   switch (read_line()) {
   | input_line =>
-    input_line |> rep |> print_endline;
+    try(input_line |> rep |> print_endline) {
+    | Env.KeyNotFound(key) => print_endline(key ++ " not found")
+    | Failure(s) => print_endline(s)
+    | Invalid_argument(s) => print_endline(s)
+    };
     main();
   | exception End_of_file => ()
   };
