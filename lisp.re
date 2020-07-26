@@ -1,15 +1,13 @@
 open Types;
 
-exception Failure(string);
-
 let numFun = (f, args) => {
   switch (args) {
   | [Integer(a), Integer(b)] => Integer(f(a, b))
-  | _ => raise(Invalid_argument("Wrong args or function type"))
+  | _ => raise(Failure("Wrong args or function type"))
   };
 };
 
-let repl_env = Env.makeEnv(None);
+let repl_env = Env.makeEnv(None, [], []);
 
 repl_env#set("+", Fn(numFun((+))));
 repl_env#set("-", Fn(numFun((-))));
@@ -28,6 +26,18 @@ let rec eval = (ast, repl_env) => {
   | List([Symbol("let*"), List(bindings), body]) =>
     let newEnv = createEnvWithBindings(bindings, repl_env);
     eval(body, newEnv);
+  | List([Symbol("do"), ...body]) =>
+    // Why are we using eval_ast here instead of eval
+    List.fold_left((_acc, next) => eval(next, repl_env), Nil, body)
+  | List([Symbol("if"), conditional, then_, else_]) =>
+    switch (eval_ast(conditional, repl_env)) {
+    | False
+    | Nil => eval_ast(then_, repl_env)
+    | _ => eval_ast(else_, repl_env)
+    }
+  | List([Symbol("fn*"), List(bindings), body]) =>
+    Fn(args => eval(body, Env.makeEnv(Some(repl_env), bindings, args)))
+
   | List(_) =>
     switch (eval_ast(ast, repl_env)) {
     | List([Fn(fn), ...args]) => fn(args)
@@ -44,7 +54,9 @@ and eval_ast = (ast, repl_env) => {
   };
 }
 and createEnvWithBindings = (bindings, oldEnv) => {
-  let newEnv = Env.makeEnv(Some(oldEnv));
+  // Initial function created to support let bindings....
+  // Look into replacing this asap
+  let newEnv = Env.makeEnv(Some(oldEnv), [], []);
 
   let rec acc = lst =>
     switch (lst) {
@@ -67,9 +79,8 @@ let rec main = () => {
   switch (read_line()) {
   | input_line =>
     try(input_line |> rep |> print_endline) {
-    | Env.KeyNotFound(key) => print_endline(key ++ " not found")
+    | KeyNotFound(key) => print_endline(key ++ " not found")
     | Failure(s) => print_endline(s)
-    | Invalid_argument(s) => print_endline(s)
     };
     main();
   | exception End_of_file => ()

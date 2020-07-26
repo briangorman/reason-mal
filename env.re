@@ -1,10 +1,11 @@
 module M = Map.Make(String);
 
-exception KeyNotFound(string);
+open Types;
 
-let makeEnv = env => {
+let makeEnv = (env, binds, expr) => {
   let data = ref(M.empty);
-  {
+
+  let obj = {
     pub set = (k: string, v: Types.malType) => data := M.add(k, v, data^);
     pub find = k =>
       switch (M.find_opt(k, data^), env) {
@@ -15,7 +16,12 @@ let makeEnv = env => {
     pub get = k =>
       switch (this#find(k)) {
       | Some(v) => v
-      | None => raise(KeyNotFound(k))
+      | None => raise(Types.KeyNotFound(k))
       }
   };
+
+  List.combine(binds, expr)
+  |> List.iter(((binding, expr)) => switch(binding, expr) { | (Symbol(key), expr) => obj#set(key, expr) });
+
+  obj;
 };

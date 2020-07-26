@@ -1,3 +1,6 @@
+exception KeyNotFound(string);
+exception Failure(string);
+
 type malType =
   | List(list(malType))
   | Symbol(string)
