@@ -6,9 +6,15 @@ let malRegex =
   );
 
 let read_atom = token => {
-  switch (int_of_string_opt(token)) {
-  | Some(i) => Integer(i)
-  | None => Symbol(token)
+  switch (token) {
+  | "nil" => Nil
+  | "true" => True
+  | "false" => False
+  | _ =>
+    switch (int_of_string_opt(token)) {
+    | Some(i) => Integer(i)
+    | None => Symbol(token)
+    }
   };
 };
 

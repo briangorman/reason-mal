@@ -12,5 +12,8 @@ let rec pr_str = form => switch (form) {
   | Integer(i) => string_of_int(i)
   | Symbol(s) => s
   | List(lst) => ["(", (List.map(pr_str, lst) |> String.concat(" ")), ")"  ] |> String.concat("")
-  | Fn(_) => "Fn"
+  | Fn(_) => "#<function>"
+  | Nil => "nil"
+  | False => "false"
+  | True => "true"
 }
