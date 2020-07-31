@@ -1,5 +1,7 @@
 open Types;
 
+let repl_env = Env.makeEnv(None, [], []);
+
 let numFun = (f, args) => {
   switch (args) {
   | [Integer(a), Integer(b)] => Integer(f(a, b))
@@ -7,12 +9,7 @@ let numFun = (f, args) => {
   };
 };
 
-let repl_env = Env.makeEnv(None, [], []);
-
-repl_env#set("+", Fn(numFun((+))));
-repl_env#set("-", Fn(numFun((-))));
-repl_env#set("/", Fn(numFun((/))));
-repl_env#set("*", Fn(numFun(( * ))));
+List.iter(((k, v)) => repl_env#set(k, v), Core.ns);
 
 let read = str => Reader.read_str(str);
 
@@ -30,10 +27,16 @@ let rec eval = (ast, repl_env) => {
     // Why are we using eval_ast here instead of eval
     List.fold_left((_acc, next) => eval(next, repl_env), Nil, body)
   | List([Symbol("if"), conditional, then_, else_]) =>
-    switch (eval_ast(conditional, repl_env)) {
+    switch (eval(conditional, repl_env)) {
     | False
-    | Nil => eval_ast(then_, repl_env)
-    | _ => eval_ast(else_, repl_env)
+    | Nil => eval(else_, repl_env)
+    | _ => eval(then_, repl_env)
+    }
+  | List([Symbol("if"), conditional, then_]) =>
+    switch (eval(conditional, repl_env)) {
+    | False
+    | Nil => Nil
+    | _ => eval(then_, repl_env)
     }
   | List([Symbol("fn*"), List(bindings), body]) =>
     Fn(args => eval(body, Env.makeEnv(Some(repl_env), bindings, args)))
@@ -41,6 +44,7 @@ let rec eval = (ast, repl_env) => {
   | List(_) =>
     switch (eval_ast(ast, repl_env)) {
     | List([Fn(fn), ...args]) => fn(args)
+
     | _ => raise(Failure("Function not in first position in apply phase"))
     }
   | _ => eval_ast(ast, repl_env)
@@ -81,6 +85,7 @@ let rec main = () => {
     try(input_line |> rep |> print_endline) {
     | KeyNotFound(key) => print_endline(key ++ " not found")
     | Failure(s) => print_endline(s)
+    | Invalid_argument(s) => print_endline(s)
     };
     main();
   | exception End_of_file => ()
