@@ -21,7 +21,12 @@ let makeEnv = (env, binds, expr) => {
   };
 
   List.combine(binds, expr)
-  |> List.iter(((binding, expr)) => switch(binding, expr) { | (Symbol(key), expr) => obj#set(key, expr) });
+  |> List.iter(((binding, expr)) =>
+       switch (binding, expr) {
+       | (Symbol(key), expr) => obj#set(key, expr)
+       | _ => ()
+       }
+     );
 
   obj;
 };

@@ -21,6 +21,7 @@ let read_atom = token => {
 let rec read_form = readerObj =>
   switch (readerObj#peek()) {
   | "(" => read_list(readerObj)
+  | "[" => read_vector(readerObj)
   | atom => read_atom(atom)
   }
 and read_list = readerObj => {
@@ -34,6 +35,19 @@ and read_list = readerObj => {
     };
   };
   assert(readerObj#next() == "(");
+  accumulator([]);
+}
+and read_vector = readerObj => {
+  let rec accumulator = lst => {
+    switch (readerObj#peek()) {
+    | "]" => Vector(lst)
+    | _form =>
+      let newAst = List.append(lst, [read_form(readerObj)]);
+      readerObj#next() |> ignore;
+      accumulator(newAst);
+    };
+  };
+  assert(readerObj#next() == "[");
   accumulator([]);
 };
 

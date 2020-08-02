@@ -54,6 +54,7 @@ and eval_ast = (ast, repl_env) => {
   switch (ast) {
   | Symbol(s) => repl_env#get(s)
   | List(lst) => List(List.map(ast => eval(ast, repl_env), lst))
+  | Vector(lst) => Vector(List.map(ast => eval(ast, repl_env), lst))
   | _ => ast
   };
 }
