@@ -10,10 +10,14 @@ let read_atom = token => {
   | "nil" => Nil
   | "true" => True
   | "false" => False
-  | _ =>
-    switch (int_of_string_opt(token)) {
-    | Some(i) => Integer(i)
-    | None => Symbol(token)
+  | t =>
+    if (t.[0] == ':') {
+      Keyword(t);
+    } else {
+      switch (int_of_string_opt(t)) {
+      | Some(i) => Integer(i)
+      | None => Symbol(token)
+      };
     }
   };
 };
@@ -22,6 +26,7 @@ let rec read_form = readerObj =>
   switch (readerObj#peek()) {
   | "(" => read_list(readerObj)
   | "[" => read_vector(readerObj)
+  | "{" => read_hashmap(readerObj)
   | atom => read_atom(atom)
   }
 and read_list = readerObj => {
@@ -29,9 +34,9 @@ and read_list = readerObj => {
     switch (readerObj#peek()) {
     | ")" => List(lst)
     | _form =>
-      let newAst = List.append(lst, [read_form(readerObj)]);
+      let newList = List.append(lst, [read_form(readerObj)]);
       readerObj#next() |> ignore;
-      accumulator(newAst);
+      accumulator(newList);
     };
   };
   assert(readerObj#next() == "(");
@@ -42,12 +47,39 @@ and read_vector = readerObj => {
     switch (readerObj#peek()) {
     | "]" => Vector(lst)
     | _form =>
-      let newAst = List.append(lst, [read_form(readerObj)]);
+      let newVector = List.append(lst, [read_form(readerObj)]);
       readerObj#next() |> ignore;
-      accumulator(newAst);
+      accumulator(newVector);
     };
   };
   assert(readerObj#next() == "[");
+  accumulator([]);
+}
+and read_hashmap = readerObj => {
+  let rec accumulator = lst => {
+    switch (readerObj#peek()) {
+    | "}" =>
+      let hm =
+        lst
+        |> Util.partition2
+        |> List.fold_left(
+             (acc, (k, v)) =>
+               switch (k) {
+               | Symbol(s) => StringMap.add(s, v, acc)
+               | Keyword(s) => StringMap.add(s, v, acc)
+               | _ =>
+                 raise(Failure("Only keys and symbols can be added to maps"))
+               },
+             StringMap.empty,
+           );
+      HashMap(hm);
+    | _form =>
+      let lst = List.append(lst, [read_form(readerObj)]);
+      readerObj#next() |> ignore;
+      accumulator(lst);
+    };
+  };
+  assert(readerObj#next() == "{");
   accumulator([]);
 };
 
