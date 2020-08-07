@@ -20,11 +20,11 @@ let rec eval = (ast, repl_env) => {
     let value = eval(expr, repl_env);
     repl_env#set(k, value);
     value;
-  | List([Symbol("let*"), List(bindings), body]) =>
+  | List([Symbol("let*"), List(bindings), body])
+  | Vector([Symbol("let*"), List(bindings), body]) =>
     let newEnv = createEnvWithBindings(bindings, repl_env);
     eval(body, newEnv);
   | List([Symbol("do"), ...body]) =>
-    // Why are we using eval_ast here instead of eval
     List.fold_left((_acc, next) => eval(next, repl_env), Nil, body)
   | List([Symbol("if"), conditional, then_, else_]) =>
     switch (eval(conditional, repl_env)) {
@@ -55,6 +55,7 @@ and eval_ast = (ast, repl_env) => {
   | Symbol(s) => repl_env#get(s)
   | List(lst) => List(List.map(ast => eval(ast, repl_env), lst))
   | Vector(lst) => Vector(List.map(ast => eval(ast, repl_env), lst))
+  | HashMap(hm) => HashMap(StringMap.map(ast => eval(ast, repl_env), hm))
   | _ => ast
   };
 }

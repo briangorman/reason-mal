@@ -8,6 +8,7 @@ type malType =
   | Vector(list(malType))
   | Symbol(string)
   | Keyword(string)
+  | String(string)
   | Integer(int)
   | HashMap(StringMap.t(malType))
   | Fn(list(malType) => malType)

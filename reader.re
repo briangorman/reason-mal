@@ -5,19 +5,30 @@ let malRegex =
     "[\\s,]*(~@|[\\[\\]{}()'`~^@]|\"(?:[\\].|[^\\\"])*\"?|;.*|[^\\s\\[\\]{}()'\"`@,;]+)",
   );
 
+let isStringLiteral = token =>
+  if (String.length(token) == 0) {
+    false;
+  } else {
+    token.[String.length(token) - 1] == '\n';
+  };
+
 let read_atom = token => {
   switch (token) {
   | "nil" => Nil
   | "true" => True
   | "false" => False
   | t =>
-    if (t.[0] == ':') {
-      Keyword(t);
-    } else {
+    switch (t.[0]) {
+    | ':' => Keyword(t)
+    | '"' =>
+      isStringLiteral(t)
+        ? String(Scanf.unescaped(t)) : raise(Failure("Invalid string"))
+
+    | _ =>
       switch (int_of_string_opt(t)) {
       | Some(i) => Integer(i)
       | None => Symbol(token)
-      };
+      }
     }
   };
 };

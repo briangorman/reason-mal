@@ -1,6 +1,6 @@
 open Types;
 
-let rec pr_str = form =>
+let rec pr_str = (~print_readably=false, form) =>
   switch (form) {
   | Integer(i) => string_of_int(i)
   | Symbol(s) => s
@@ -24,6 +24,7 @@ let rec pr_str = form =>
   | Nil => "nil"
   | False => "false"
   | True => "true"
+  | String(s) =>  print_readably ? String.escaped(s) : s
   }
 and pr_str_hash_tuple = ((k, v)) => {
   k ++ " " ++ pr_str(v);
