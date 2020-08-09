@@ -24,7 +24,7 @@ let rec pr_str = (~print_readably=false, form) =>
   | Nil => "nil"
   | False => "false"
   | True => "true"
-  | String(s) => "\"" ++ (print_readably ? String.escaped(s) : s) ++ "\""
+  | String(s) =>  print_readably ? "\"" ++ (String.escaped(s)) ++ "\"" : s
   }
 and pr_str_hash_tuple = ((k, v)) => {
   k ++ " " ++ pr_str(v);

@@ -78,6 +78,7 @@ and createEnvWithBindings = (bindings, oldEnv) => {
 
 let print = form => Printer.pr_str(~print_readably=true, form);
 
+// Todo, ocamlize the function signatures to allow for |>
 let rep = str => print(eval(read(str), repl_env));
 
 let rec main = () => {
@@ -87,7 +88,8 @@ let rec main = () => {
     try(input_line |> rep |> print_endline) {
     | KeyNotFound(key) => print_endline(key ++ " not found")
     | Failure(s) => print_endline(s)
-    | Invalid_argument(s) => print_endline(s)
+    | Stdlib.Scanf.Scan_failure(s) => print_endline(s)
+    | _ => print_endline("Unhandled exception from within....")
     };
     main();
   | exception End_of_file => ()
