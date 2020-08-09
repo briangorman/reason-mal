@@ -76,7 +76,7 @@ and createEnvWithBindings = (bindings, oldEnv) => {
   newEnv;
 };
 
-let print = form => Printer.pr_str(form);
+let print = form => Printer.pr_str(~print_readably=true, form);
 
 let rep = str => print(eval(read(str), repl_env));
 

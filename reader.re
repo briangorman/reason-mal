@@ -1,33 +1,35 @@
-open Types;
+module T = Types;
 
 let malRegex =
   Pcre.regexp(
-    "[\\s,]*(~@|[\\[\\]{}()'`~^@]|\"(?:[\\].|[^\\\"])*\"?|;.*|[^\\s\\[\\]{}()'\"`@,;]+)",
+    "[\\s,]*(~@|[\\[\\]{}()'`~^@]|\"(?:\\\\.|[^\\\\\"])*\"?|;.*|[^\\s\\[\\]{}()'\"`@,;]+)",
   );
 
 let isStringLiteral = token =>
   if (String.length(token) == 0) {
     false;
   } else {
-    token.[String.length(token) - 1] == '\n';
+    token.[String.length(token) - 1] == '"';
   };
 
 let read_atom = token => {
   switch (token) {
-  | "nil" => Nil
-  | "true" => True
-  | "false" => False
+  | "nil" => T.Nil
+  | "true" => T.True
+  | "false" => T.False
   | t =>
     switch (t.[0]) {
-    | ':' => Keyword(t)
+    | ':' => T.Keyword(t)
     | '"' =>
+      let strLen = String.length(t);
       isStringLiteral(t)
-        ? String(Scanf.unescaped(t)) : raise(Failure("Invalid string"))
+        ? T.String(Scanf.unescaped(String.sub(t, 1, strLen - 2)))
+        : raise(T.Failure("Invalid string"));
 
     | _ =>
       switch (int_of_string_opt(t)) {
-      | Some(i) => Integer(i)
-      | None => Symbol(token)
+      | Some(i) => T.Integer(i)
+      | None => T.Symbol(token)
       }
     }
   };
@@ -43,7 +45,7 @@ let rec read_form = readerObj =>
 and read_list = readerObj => {
   let rec accumulator = lst => {
     switch (readerObj#peek()) {
-    | ")" => List(lst)
+    | ")" => T.List(lst)
     | _form =>
       let newList = List.append(lst, [read_form(readerObj)]);
       readerObj#next() |> ignore;
@@ -56,7 +58,7 @@ and read_list = readerObj => {
 and read_vector = readerObj => {
   let rec accumulator = lst => {
     switch (readerObj#peek()) {
-    | "]" => Vector(lst)
+    | "]" => T.Vector(lst)
     | _form =>
       let newVector = List.append(lst, [read_form(readerObj)]);
       readerObj#next() |> ignore;
@@ -76,14 +78,14 @@ and read_hashmap = readerObj => {
         |> List.fold_left(
              (acc, (k, v)) =>
                switch (k) {
-               | Symbol(s) => StringMap.add(s, v, acc)
-               | Keyword(s) => StringMap.add(s, v, acc)
+               | T.Symbol(s) => T.StringMap.add(s, v, acc)
+               | T.Keyword(s) => T.StringMap.add(s, v, acc)
                | _ =>
                  raise(Failure("Only keys and symbols can be added to maps"))
                },
-             StringMap.empty,
+             T.StringMap.empty,
            );
-      HashMap(hm);
+      T.HashMap(hm);
     | _form =>
       let lst = List.append(lst, [read_form(readerObj)]);
       readerObj#next() |> ignore;
