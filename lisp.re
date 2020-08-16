@@ -21,7 +21,7 @@ let rec eval = (ast, repl_env) => {
     repl_env#set(k, value);
     value;
   | List([Symbol("let*"), List(bindings), body])
-  | Vector([Symbol("let*"), List(bindings), body]) =>
+  | List([Symbol("let*"), Vector(bindings), body]) =>
     let newEnv = createEnvWithBindings(bindings, repl_env);
     eval(body, newEnv);
   | List([Symbol("do"), ...body]) =>
