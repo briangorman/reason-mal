@@ -47,6 +47,25 @@ let println = args => {
   };
 };
 
+let read_str = args => {
+  switch (args) {
+  | [String(str)] => str |> Reader.read_str
+  | _ => raise(Failure("Wrong args or function type"))
+  };
+};
+
+let slurp = args => {
+  switch (args) {
+  | [String(fileName)] =>
+    let b = Buffer.create(512);
+    let channel = fileName |> open_in;
+    let channelLength = in_channel_length(channel);
+    Buffer.add_channel(b, channel, channelLength);
+    String(Buffer.contents(b));
+  | _ => raise(Failure("Wrong args or function type"))
+  };
+};
+
 let listQuestion = args => {
   switch (args) {
   | [List(_)] => True
@@ -140,4 +159,6 @@ let ns = [
   ("<=", Fn(intLessThanEqualTo)),
   (">", Fn(x => x |> intLessThanEqualTo |> mal_complement)),
   (">=", Fn(x => x |> intLessThan |> mal_complement)),
+  ("slurp", Fn(slurp)),
+  ("read-string", Fn(read_str)),
 ];

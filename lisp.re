@@ -76,10 +76,24 @@ and createEnvWithBindings = (bindings, oldEnv) => {
   newEnv;
 };
 
+let eval_fn = args => {
+  switch (args) {
+  | [ast] => eval(ast, repl_env)
+
+  | _ => raise(Failure("Wrong args or function type"))
+  };
+};
+
+repl_env#set("eval", Fn(eval_fn));
+
 let print = form => Printer.pr_str(~print_readably=true, form);
 
 // Todo, ocamlize the function signatures to allow for |>
 let rep = str => print(eval(read(str), repl_env));
+
+let loadFileDefinition = "(def! load-file (fn* (f) (eval (read-string (str \"(do \" (slurp f) \"nil)\") ) ) ))";
+
+rep(loadFileDefinition);
 
 let rec main = () => {
   print_string("user> ");
