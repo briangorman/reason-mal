@@ -141,6 +141,48 @@ let mal_complement = tf => {
   };
 };
 
+let makeAtom = args => {
+  switch (args) {
+  // | [Atom(_)] => raise(Failure("Cannot make an atom of an atom"));
+  | [mt] => Atom(ref(mt))
+  | _ => raise(Failure("Wrong args or function type"))
+  };
+};
+
+let isAtom = args => {
+  switch (args) {
+  | [Atom(_)] => True
+  | [_] => False
+  | _ => raise(Failure("Wrong args or function type"))
+  };
+};
+
+let derefAtom = args => {
+  switch (args) {
+  | [Atom(mt)] => mt^
+  | _ => raise(Failure("Wrong args or function type"))
+  };
+};
+
+let resetAtom = args => {
+  switch (args) {
+  | [Atom(r), newValue] =>
+    r := newValue;
+    newValue;
+  | _ => raise(Failure("Wrong args or function type"))
+  };
+};
+
+let swapAtom = args => {
+  switch (args) {
+  | [Atom(mt), Fn(f), ...fnArgs] =>
+    let newValue = f([mt^] @ fnArgs);
+    mt := newValue;
+    newValue;
+  | _ => raise(Failure("Wrong args or function type"))
+  };
+};
+
 let ns = [
   ("+", Fn(numFun((+)))),
   ("-", Fn(numFun((-)))),
@@ -161,4 +203,9 @@ let ns = [
   (">=", Fn(x => x |> intLessThan |> mal_complement)),
   ("slurp", Fn(slurp)),
   ("read-string", Fn(read_str)),
+  ("atom", Fn(makeAtom)),
+  ("atom?", Fn(isAtom)),
+  ("deref", Fn(derefAtom)),
+  ("reset!", Fn(resetAtom)),
+  ("swap!", Fn(swapAtom)),
 ];

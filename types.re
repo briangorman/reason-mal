@@ -12,6 +12,7 @@ type malType =
   | Integer(int)
   | HashMap(StringMap.t(malType))
   | Fn(list(malType) => malType)
+  | Atom(ref(malType))
   | Nil
   | True
   | False;

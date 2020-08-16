@@ -36,8 +36,13 @@ let read_atom = token => {
   };
 };
 
+
+
 let rec read_form = readerObj =>
   switch (readerObj#peek()) {
+  | "@" =>
+    readerObj#next() |> ignore;
+    T.List([T.Symbol("deref"), read_form(readerObj)])
   | "(" => read_list(readerObj)
   | "[" => read_vector(readerObj)
   | "{" => read_hashmap(readerObj)

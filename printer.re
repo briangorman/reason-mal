@@ -24,6 +24,7 @@ let rec pr_str = (~print_readably=false, form) =>
   | Nil => "nil"
   | False => "false"
   | True => "true"
+  | Atom(_) => "#<atom>"
   | String(s) =>  print_readably ? "\"" ++ (String.escaped(s)) ++ "\"" : s
   }
 and pr_str_hash_tuple = ((k, v)) => {
