@@ -36,13 +36,17 @@ let read_atom = token => {
   };
 };
 
-
-
 let rec read_form = readerObj =>
   switch (readerObj#peek()) {
-  | "@" =>
+  | "@" => handleReaderMacro("deref", readerObj)
+  | "'" => handleReaderMacro("quote", readerObj)
+  | "`" => handleReaderMacro("quasiquote", readerObj)
+  | "~" =>
     readerObj#next() |> ignore;
-    T.List([T.Symbol("deref"), read_form(readerObj)])
+    switch (readerObj#peek()) {
+    | "@" => handleReaderMacro("unquote", readerObj)
+    | _ => T.List([T.Symbol("splice-unquote"), read_form(readerObj)])
+    };
   | "(" => read_list(readerObj)
   | "[" => read_vector(readerObj)
   | "{" => read_hashmap(readerObj)
@@ -100,6 +104,10 @@ and read_hashmap = readerObj => {
   };
   assert(readerObj#next() == "{");
   accumulator([]);
+}
+and handleReaderMacro = (sym, readerObj) => {
+  readerObj#next() |> ignore;
+  T.List([T.Symbol(sym), read_form(readerObj)]);
 };
 
 let tokenize = str =>
