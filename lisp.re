@@ -13,9 +13,25 @@ List.iter(((k, v)) => repl_env#set(k, v), Core.ns);
 
 let read = str => Reader.read_str(str);
 
+let rec quasiquote = ast => {
+  switch (ast) {
+  | List([Symbol("unquote"), second]) => second
+  | List([List([Symbol("splice-unquote"), snd]), ...rst])
+    => List([Symbol("concat"), snd, quasiquote(List(rst))])
+  | List([fst, ...rst]) =>
+    List([Symbol("cons"), quasiquote(fst), quasiquote(List(rst))])
+  | HashMap(_) => List([Symbol("quote"), ast])
+  | Symbol(_) => List([Symbol("quote"), ast])
+  | _ => ast
+  };
+};
+
 let rec eval = (ast, repl_env) => {
   switch (ast) {
   | List([]) => ast
+  | List([Symbol("quote"), arg]) => arg
+  | List([Symbol("quasiquoteexpand"), arg]) => quasiquote(arg)
+  | List([Symbol("quasiquote"), arg]) => eval(quasiquote(arg), repl_env) // Todo flip args of eval
   | List([Symbol("def!"), Symbol(k), expr]) =>
     let value = eval(expr, repl_env);
     repl_env#set(k, value);
