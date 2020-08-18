@@ -90,6 +90,24 @@ let count = args => {
   };
 };
 
+let cons = args => {
+  switch (args) {
+  | [arg1, List(lst)] => List([arg1] @ lst)
+  | _ => raise(Failure("wrong arguments to cons"))
+  };
+};
+
+let concat = args => {
+  let rec acc = (accumulated, remaining) => {
+    switch (remaining) {
+    | [] => List(accumulated)
+    | [List(lst), ...rst] => acc(accumulated @ lst, rst)
+    | _  => raise(Failure("concat only works on lists"))
+    };
+  };
+  acc([], args);
+};
+
 type computationEnded =
   | EqualityComplete(malType)
   | InProgress(list(malType));
@@ -107,6 +125,7 @@ let rec equal = args => {
   | [True, True] => True
   | [False, False] => True
   | [Nil, Nil] => True
+    // This is missing support for Strings, Vectors and HashMaps
   | _ => False
   };
 }
@@ -196,6 +215,8 @@ let ns = [
   ("list?", Fn(listQuestion)),
   ("empty?", Fn(listEmpty)),
   ("count", Fn(count)),
+  ("cons", Fn(cons)),
+  ("concat", Fn(concat)),
   ("=", Fn(equal)),
   ("<", Fn(intLessThan)),
   ("<=", Fn(intLessThanEqualTo)),
