@@ -6,10 +6,10 @@ let rec pr_str = (~print_readably=false, form) =>
   | Symbol(s) => s
   | Keyword(s) => s
   | List(lst) =>
-    ["(", List.map(pr_str, lst) |> String.concat(" "), ")"]
+    ["(", List.map(pr_str(~print_readably), lst) |> String.concat(" "), ")"]
     |> String.concat("")
   | Vector(lst) =>
-    ["[", List.map(pr_str, lst) |> String.concat(" "), "]"]
+    ["[", List.map(pr_str(~print_readably), lst) |> String.concat(" "), "]"]
     |> String.concat("")
   | HashMap(hm) =>
     [
