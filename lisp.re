@@ -22,6 +22,7 @@ let rec quasiquote = ast => {
     List([Symbol("cons"), quasiquote(fst), quasiquote(List(rst))])
   | HashMap(_) => List([Symbol("quote"), ast])
   | Symbol(_) => List([Symbol("quote"), ast])
+  | Vector(lst) => List([Symbol("vec"), List(lst)])
   | _ => ast
   };
 };

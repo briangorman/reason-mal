@@ -93,6 +93,7 @@ let count = args => {
 let cons = args => {
   switch (args) {
   | [arg1, List(lst)] => List([arg1] @ lst)
+  | [arg1, Vector(lst)] => List([arg1] @ lst)
   | _ => raise(Failure("wrong arguments to cons"))
   };
 };
@@ -102,11 +103,22 @@ let concat = args => {
     switch (remaining) {
     | [] => List(accumulated)
     | [List(lst), ...rst] => acc(accumulated @ lst, rst)
+    | [Vector(lst), ...rst] => acc(accumulated @ lst, rst)
     | _  => raise(Failure("concat only works on lists"))
     };
   };
   acc([], args);
 };
+
+let vec = args => {
+    switch (args) {
+    | [List(lst)] => Vector(lst)
+    | [Vector(lst)] => Vector(lst)
+    | _  => raise(Failure("vec only works on lists and vectors"))
+    };
+};
+
+
 
 type computationEnded =
   | EqualityComplete(malType)
@@ -115,6 +127,7 @@ type computationEnded =
 // Very Nice dual with apply
 let rec equal = args => {
   switch (args) {
+  | [Vector(lst), Vector(lst2)]
   | [List(lst), List(lst2)] =>
     switch (equal_list(lst, lst2)) {
     | EqualityComplete(complete) => complete
@@ -125,6 +138,7 @@ let rec equal = args => {
   | [True, True] => True
   | [False, False] => True
   | [Nil, Nil] => True
+  | [String(s1), String(s2)] => String.compare(s1,s2) == 0 ? True : False
     // This is missing support for Strings, Vectors and HashMaps
   | _ => False
   };
