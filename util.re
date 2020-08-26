@@ -29,7 +29,7 @@ let partition2 = (lst) => {
   let rec acc = (l, rem) =>
     switch (rem) {
     | [fst,snd, ...rest] => acc(List.append(l, [(fst,snd)]), rest)
-    | [fst, ...rest] => raise(Types.Failure("wrong"))
+    | [_fst, ..._rest] => raise(Types.Failure("wrong"))
     | [] => l
     };
   acc([], lst);

@@ -208,7 +208,7 @@ let resetAtom = args => {
 
 let swapAtom = args => {
   switch (args) {
-  | [Atom(mt), Fn(f), ...fnArgs] =>
+  | [Atom(mt), Fn(f, Function), ...fnArgs] =>
     let newValue = f([mt^] @ fnArgs);
     mt := newValue;
     newValue;
@@ -216,31 +216,32 @@ let swapAtom = args => {
   };
 };
 
+
 let ns = [
-  ("+", Fn(numFun((+)))),
-  ("-", Fn(numFun((-)))),
-  ("/", Fn(numFun((/)))),
-  ("*", Fn(numFun(( * )))),
-  ("prn", Fn(prn)),
-  ("str", Fn(str)),
-  ("pr-str", Fn(pr_str)),
-  ("println", Fn(println)),
-  ("list", Fn(listFn)),
-  ("list?", Fn(listQuestion)),
-  ("empty?", Fn(listEmpty)),
-  ("count", Fn(count)),
-  ("cons", Fn(cons)),
-  ("concat", Fn(concat)),
-  ("=", Fn(equal)),
-  ("<", Fn(intLessThan)),
-  ("<=", Fn(intLessThanEqualTo)),
-  (">", Fn(x => x |> intLessThanEqualTo |> mal_complement)),
-  (">=", Fn(x => x |> intLessThan |> mal_complement)),
-  ("slurp", Fn(slurp)),
-  ("read-string", Fn(read_str)),
-  ("atom", Fn(makeAtom)),
-  ("atom?", Fn(isAtom)),
-  ("deref", Fn(derefAtom)),
-  ("reset!", Fn(resetAtom)),
-  ("swap!", Fn(swapAtom)),
+  ("+", makeFn(numFun((+)))),
+  ("-", makeFn(numFun((-)))),
+  ("/", makeFn(numFun((/)))),
+  ("*", makeFn(numFun(( * )))),
+  ("prn", makeFn(prn)),
+  ("str", makeFn(str)),
+  ("pr-str", makeFn(pr_str)),
+  ("println", makeFn(println)),
+  ("list", makeFn(listFn)),
+  ("list?", makeFn(listQuestion)),
+  ("empty?", makeFn(listEmpty)),
+  ("count", makeFn(count)),
+  ("cons", makeFn(cons)),
+  ("concat", makeFn(concat)),
+  ("=", makeFn(equal)),
+  ("<", makeFn(intLessThan)),
+  ("<=", makeFn(intLessThanEqualTo)),
+  (">", makeFn(x => x |> intLessThanEqualTo |> mal_complement)),
+  (">=", makeFn(x => x |> intLessThan |> mal_complement)),
+  ("slurp", makeFn(slurp)),
+  ("read-string", makeFn(read_str)),
+  ("atom", makeFn(makeAtom)),
+  ("atom?", makeFn(isAtom)),
+  ("deref", makeFn(derefAtom)),
+  ("reset!", makeFn(resetAtom)),
+  ("swap!", makeFn(swapAtom)),
 ];

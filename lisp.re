@@ -13,11 +13,23 @@ List.iter(((k, v)) => repl_env#set(k, v), Core.ns);
 
 let read = str => Reader.read_str(str);
 
+let rec macroexpand = (ast, env) => {
+  switch (ast) {
+  | List([Symbol(k), ...rst]) =>
+    switch (env#get(k)) {
+    | Fn(fn, Macro) => macroexpand(fn(rst), env)
+    | exception (Types.KeyNotFound(_)) => ast
+    | _ => ast
+    }
+  | _ => ast
+  };
+};
+
 let rec quasiquote = ast => {
   switch (ast) {
   | List([Symbol("unquote"), second]) => second
-  | List([List([Symbol("splice-unquote"), snd]), ...rst])
-    => List([Symbol("concat"), snd, quasiquote(List(rst))])
+  | List([List([Symbol("splice-unquote"), snd]), ...rst]) =>
+    List([Symbol("concat"), snd, quasiquote(List(rst))])
   | List([fst, ...rst]) =>
     List([Symbol("cons"), quasiquote(fst), quasiquote(List(rst))])
   | HashMap(_) => List([Symbol("quote"), ast])
@@ -28,15 +40,26 @@ let rec quasiquote = ast => {
 };
 
 let rec eval = (ast, repl_env) => {
+  let ast = macroexpand(ast, repl_env);
   switch (ast) {
   | List([]) => ast
   | List([Symbol("quote"), arg]) => arg
+  | List([Symbol("macroexpand"), arg]) => macroexpand(arg, repl_env)
   | List([Symbol("quasiquoteexpand"), arg]) => quasiquote(arg)
   | List([Symbol("quasiquote"), arg]) => eval(quasiquote(arg), repl_env) // Todo flip args of eval
   | List([Symbol("def!"), Symbol(k), expr]) =>
     let value = eval(expr, repl_env);
     repl_env#set(k, value);
     value;
+  | List([Symbol("defmacro!"), Symbol(k), expr]) =>
+    let value =
+      switch (eval(expr, repl_env)) {
+      | Fn(fn, Function) => Fn(fn, Macro)
+      | _ => raise(Failure("Input to defmacro must be a function"))
+      };
+    repl_env#set(k, value);
+    value;
+
   | List([Symbol("let*"), List(bindings), body])
   | List([Symbol("let*"), Vector(bindings), body]) =>
     let newEnv = createEnvWithBindings(bindings, repl_env);
@@ -56,15 +79,15 @@ let rec eval = (ast, repl_env) => {
     | _ => eval(then_, repl_env)
     }
   | List([Symbol("fn*"), List(bindings), body]) =>
-    Fn(args => eval(body, Env.makeEnv(Some(repl_env), bindings, args)))
+    makeFn(args => eval(body, Env.makeEnv(Some(repl_env), bindings, args)))
 
   | List(_) =>
     switch (eval_ast(ast, repl_env)) {
-    | List([Fn(fn), ...args]) => fn(args)
+    | List([Fn(fn, Function), ...args]) => fn(args)
 
     | _ => raise(Failure("Function not in first position in apply phase"))
     }
-  | _ => eval_ast(ast, repl_env)
+  | ast => eval_ast(ast, repl_env)
   };
 }
 and eval_ast = (ast, repl_env) => {
@@ -101,7 +124,7 @@ let eval_fn = args => {
   };
 };
 
-repl_env#set("eval", Fn(eval_fn));
+repl_env#set("eval", makeFn(eval_fn));
 
 let print = form => Printer.pr_str(~print_readably=true, form);
 
