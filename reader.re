@@ -41,12 +41,8 @@ let rec read_form = readerObj =>
   | "@" => handleReaderMacro("deref", readerObj)
   | "'" => handleReaderMacro("quote", readerObj)
   | "`" => handleReaderMacro("quasiquote", readerObj)
-  | "~" =>
-    readerObj#next() |> ignore;
-    switch (readerObj#peek()) {
-    | "@" => handleReaderMacro("unquote", readerObj)
-    | _ => T.List([T.Symbol("splice-unquote"), read_form(readerObj)])
-    };
+  | "~@" => handleReaderMacro("splice-unquote", readerObj);
+  | "~" => handleReaderMacro("unquote", readerObj)
   | "(" => read_list(readerObj)
   | "[" => read_vector(readerObj)
   | "{" => read_hashmap(readerObj)
