@@ -226,6 +226,7 @@ let ns = [
   ("str", makeFn(str)),
   ("pr-str", makeFn(pr_str)),
   ("println", makeFn(println)),
+  ("vec", makeFn(vec)),
   ("list", makeFn(listFn)),
   ("list?", makeFn(listQuestion)),
   ("empty?", makeFn(listEmpty)),
