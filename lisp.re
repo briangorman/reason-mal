@@ -134,6 +134,7 @@ let rep = str => print(eval(read(str), repl_env));
 let loadFileDefinition = "(def! load-file (fn* (f) (eval (read-string (str \"(do \" (slurp f) \"nil)\") ) ) ))";
 
 rep(loadFileDefinition);
+rep("(def! not (fn* (a) (if a false true)))");
 
 let rec main = () => {
   print_string("user> ");
