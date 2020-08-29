@@ -85,14 +85,44 @@ let count = args => {
   switch (args) {
   | [List([])] => Integer(0)
   | [Nil] => Integer(0)
-  | [List(lst)] => Integer(List.length(lst))
+  | [List(lst)]
+  | [Vector(lst)] => Integer(List.length(lst))
   | _ => raise(Failure("count only works on lists or nil"))
+  };
+};
+
+let first = args => {
+  switch (args) {
+  | [List([fst, ..._rst])]
+  | [Vector([fst, ..._rst])] => fst
+  | [Nil] => Nil
+  | _ => raise(Failure("first only works on lists or vectors or nil"))
+  };
+};
+
+let rest = args => {
+  switch (args) {
+  | [List([_fst, ...rst])]
+  | [Vector([_fst, ...rst])] => List(rst)
+  | [Nil] => Nil
+  | _ => raise(Failure("rest only works on lists or vectors or nil"))
+  };
+};
+
+let rec nth = args => {
+  switch (args) {
+  | [List([fst, ..._rst]), Integer(0)]
+  | [Vector([fst, ..._rst]), Integer(0)] => fst
+  | [List([_fst, ...rst]), Integer(n)]
+  | [Vector([_fst, ...rst]), Integer(n)] => nth([List(rst), Integer(n - 1)])
+  | [Nil] => Nil
+  | _ => raise(Failure("rest only works on lists or vectors or nil"))
   };
 };
 
 let cons = args => {
   switch (args) {
-  | [arg1, List(lst)] => List([arg1] @ lst)
+  | [arg1, List(lst)]
   | [arg1, Vector(lst)] => List([arg1] @ lst)
   | _ => raise(Failure("wrong arguments to cons"))
   };
@@ -102,23 +132,21 @@ let concat = args => {
   let rec acc = (accumulated, remaining) => {
     switch (remaining) {
     | [] => List(accumulated)
-    | [List(lst), ...rst] => acc(accumulated @ lst, rst)
+    | [List(lst), ...rst]
     | [Vector(lst), ...rst] => acc(accumulated @ lst, rst)
-    | _  => raise(Failure("concat only works on lists"))
+    | _ => raise(Failure("concat only works on lists"))
     };
   };
   acc([], args);
 };
 
 let vec = args => {
-    switch (args) {
-    | [List(lst)] => Vector(lst)
-    | [Vector(lst)] => Vector(lst)
-    | _  => raise(Failure("vec only works on lists and vectors"))
-    };
+  switch (args) {
+  | [List(lst)]
+  | [Vector(lst)] => Vector(lst)
+  | _ => raise(Failure("vec only works on lists and vectors"))
+  };
 };
-
-
 
 type computationEnded =
   | EqualityComplete(malType)
@@ -138,8 +166,8 @@ let rec equal = args => {
   | [True, True] => True
   | [False, False] => True
   | [Nil, Nil] => True
-  | [String(s1), String(s2)] => String.compare(s1,s2) == 0 ? True : False
-    // This is missing support for Strings, Vectors and HashMaps
+  | [String(s1), String(s2)] => String.compare(s1, s2) == 0 ? True : False
+  // This is missing support for Strings, Vectors and HashMaps
   | _ => False
   };
 }
@@ -216,7 +244,6 @@ let swapAtom = args => {
   };
 };
 
-
 let ns = [
   ("+", makeFn(numFun((+)))),
   ("-", makeFn(numFun((-)))),
@@ -231,6 +258,9 @@ let ns = [
   ("list?", makeFn(listQuestion)),
   ("empty?", makeFn(listEmpty)),
   ("count", makeFn(count)),
+  ("first", makeFn(first)),
+  ("rest", makeFn(rest)),
+  ("nth", makeFn(nth)),
   ("cons", makeFn(cons)),
   ("concat", makeFn(concat)),
   ("=", makeFn(equal)),

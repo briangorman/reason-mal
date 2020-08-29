@@ -131,10 +131,10 @@ let print = form => Printer.pr_str(~print_readably=true, form);
 // Todo, ocamlize the function signatures to allow for |>
 let rep = str => print(eval(read(str), repl_env));
 
-let loadFileDefinition = "(def! load-file (fn* (f) (eval (read-string (str \"(do \" (slurp f) \"nil)\") ) ) ))";
-
+let loadFileDefinition = "(def! load-file (fn* (f) (eval (read-string (str \"(do \" (slurp f) \"nil)\")))))";
 rep(loadFileDefinition);
 rep("(def! not (fn* (a) (if a false true)))");
+rep("(defmacro! cond (fn* (& xs) (if (> (count xs) 0) (list 'if (first xs) (if (> (count xs) 1) (nth xs 1) (throw \"odd number of forms to cond\")) (cons 'cond (rest (rest xs)))))))");
 
 let rec main = () => {
   print_string("user> ");
