@@ -16,7 +16,7 @@ let makeEnv = (env, binds, expr) => {
     pub get = k =>
       switch (this#find(k)) {
       | Some(v) => v
-      | None => raise(Types.KeyNotFound(k))
+      | None => raise(Types.KeyNotFound("'" ++ k ++ "'" ++ " not found"))
       }
   };
 

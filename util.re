@@ -6,7 +6,7 @@ let take = (toTake, lst) => {
       switch (remaining) {
       | [next, ...rst] =>
         acc(remainingToTake - 1, List.append(taken, [next]), rst)
-      | [] => raise(Types.Failure("Invalid take"))
+      | [] => raise(Failure("Invalid take"))
       };
     };
   acc(toTake, [], lst);
@@ -19,19 +19,26 @@ let drop = (toDrop, lst) => {
     } else {
       switch (remaining) {
       | [_next, ...rst] => acc(remainingToDrop - 1, rst)
-      | [] => raise(Types.Failure("Invalid drop"))
+      | [] => raise(Failure("Invalid drop"))
       };
     };
   acc(toDrop, lst);
 };
 
-let partition2 = (lst) => {
+let partition2 = lst => {
   let rec acc = (l, rem) =>
     switch (rem) {
-    | [fst,snd, ...rest] => acc(List.append(l, [(fst,snd)]), rest)
-    | [_fst, ..._rest] => raise(Types.Failure("wrong"))
+    | [fst, snd, ...rest] => acc(List.append(l, [(fst, snd)]), rest)
+    | [_fst, ..._rest] => raise(Failure("wrong"))
     | [] => l
     };
   acc([], lst);
 };
 
+let rec zip = (lst1, lst2) =>
+  switch (lst1, lst2) {
+  | ([], _)
+  | (_, []) => raise(Failure("Unequal lists in zip"))
+  | ([fst1, ...rst1], [fst2, ...rst2]) =>
+    [(fst1, fst2)] @ zip(rst1, rst2)
+  };

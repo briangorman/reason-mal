@@ -1,5 +1,4 @@
 exception KeyNotFound(string);
-exception Failure(string);
 
 module StringMap = Map.Make(String);
 
@@ -20,5 +19,7 @@ type malType =
   | Nil
   | True
   | False;
+
+exception MalException(malType);
 
 let makeFn = x => Fn(x, Function);

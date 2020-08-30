@@ -25,7 +25,7 @@ let read_atom = token => {
       // Doesn't handle uneven strings correctly
       isStringLiteral(t)
         ? T.String(Scanf.unescaped(String.sub(t, 1, strLen - 2)))
-        : raise(T.Failure("Invalid string"));
+        : raise(Failure("Invalid string"));
 
     | _ =>
       switch (int_of_string_opt(t)) {

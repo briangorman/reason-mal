@@ -18,7 +18,7 @@ let rec macroexpand = (ast, env) => {
   | List([Symbol(k), ...rst]) =>
     switch (env#get(k)) {
     | Fn(fn, Macro) => macroexpand(fn(rst), env)
-    | exception (Types.KeyNotFound(_)) => ast
+    | exception (Types.KeyNotFound(_)) => ast // Catch key not found in macroexpand to prevent functions defined by def from blowing up at interpreter startup
     | _ => ast
     }
   | _ => ast
@@ -43,6 +43,18 @@ let rec eval = (ast, repl_env) => {
   let ast = macroexpand(ast, repl_env);
   switch (ast) {
   | List([]) => ast
+  | List([Symbol("try*"), a, List([Symbol("catch*"), b, c])]) =>
+    try(eval(a, repl_env)) {
+    | MalException(mt) =>
+      let newEnv = Env.makeEnv(Some(repl_env), [b], [mt]);
+      eval(c, newEnv);
+    | Failure(s)
+    | KeyNotFound(s)
+    | Invalid_argument(s) =>
+      // Typing into bindings could be improved
+      let newEnv = Env.makeEnv(Some(repl_env), [b], [String(s)]);
+      eval(c, newEnv);
+    }
   | List([Symbol("quote"), arg]) => arg
   | List([Symbol("macroexpand"), arg]) => macroexpand(arg, repl_env)
   | List([Symbol("quasiquoteexpand"), arg]) => quasiquote(arg)
@@ -55,7 +67,8 @@ let rec eval = (ast, repl_env) => {
     let value =
       switch (eval(expr, repl_env)) {
       | Fn(fn, Function) => Fn(fn, Macro)
-      | _ => raise(Failure("Input to defmacro must be a function"))
+      | _ =>
+        raise(MalException(String("Input to defmacro must be a function")))
       };
     repl_env#set(k, value);
     value;
@@ -85,7 +98,12 @@ let rec eval = (ast, repl_env) => {
     switch (eval_ast(ast, repl_env)) {
     | List([Fn(fn, Function), ...args]) => fn(args)
 
-    | _ => raise(Failure("Function not in first position in apply phase"))
+    | _ =>
+      raise(
+        MalException(
+          String("Function not in first position in apply phase"),
+        ),
+      )
     }
   | ast => eval_ast(ast, repl_env)
   };
@@ -110,7 +128,12 @@ and createEnvWithBindings = (bindings, oldEnv) => {
       newEnv#set(key, eval(expr, newEnv));
       acc(rest);
     | [] => ()
-    | _ => raise(Failure("let* bindings require an even number of forms"))
+    | _ =>
+      raise(
+        MalException(
+          String("let* bindings require an even number of forms"),
+        ),
+      )
     };
   acc(bindings);
   newEnv;
@@ -120,7 +143,7 @@ let eval_fn = args => {
   switch (args) {
   | [ast] => eval(ast, repl_env)
 
-  | _ => raise(Failure("Wrong args or function type"))
+  | _ => raise(MalException(String("Wrong args or function type")))
   };
 };
 
@@ -134,15 +157,24 @@ let rep = str => print(eval(read(str), repl_env));
 let loadFileDefinition = "(def! load-file (fn* (f) (eval (read-string (str \"(do \" (slurp f) \"nil)\")))))";
 rep(loadFileDefinition);
 rep("(def! not (fn* (a) (if a false true)))");
-rep("(defmacro! cond (fn* (& xs) (if (> (count xs) 0) (list 'if (first xs) (if (> (count xs) 1) (nth xs 1) (throw \"odd number of forms to cond\")) (cons 'cond (rest (rest xs)))))))");
+
+// Cond needs variadic function definition to work.... I don't have this defined yet
+rep(
+  "(defmacro! cond (fn* (& xs) (if (> (count xs) 0) (list 'if (first xs) (if (> (count xs) 1) (nth xs 1) (throw \"odd number of forms to cond\")) (cons 'cond (rest (rest xs)))))))",
+);
 
 let rec main = () => {
   print_string("user> ");
   switch (read_line()) {
   | input_line =>
     try(input_line |> rep |> print_endline) {
-    | KeyNotFound(key) => print_endline(key ++ " not found")
+    | KeyNotFound(s)
+    | Invalid_argument(s)
     | Failure(s) => print_endline(s)
+    | MalException(mt) =>
+      print_endline(
+        "Uncaught mal exception: " ++ Printer.pr_str(~print_readably=true, mt),
+      )
     | Stdlib.Scanf.Scan_failure(s) => print_endline(s)
     | _ => print_endline("Unhandled exception from within....")
     };

@@ -3,22 +3,13 @@ open Types;
 let numFun = (f, args) => {
   switch (args) {
   | [Integer(a), Integer(b)] => Integer(f(a, b))
-  | _ => raise(Failure("Wrong args or function type"))
-  };
-};
-
-let prn = args => {
-  switch (args) {
-  | [elm] =>
-    print_endline(Printer.pr_str(~print_readably=true, elm));
-    Nil;
-  | _ => raise(Failure("Wrong args or function type"))
+  | _ => raise(Failure("Wrong args or function type to numfun"));
   };
 };
 
 let str_helper = (~print_readably=false, args) => {
   switch (args) {
-  | [] => raise(Failure("Wrong args or function type"))
+  | [] => raise(Failure("Wrong args or function type"));
   | lst =>
     String(
       lst |> List.map(Printer.pr_str(~print_readably)) |> String.concat(""),
@@ -35,12 +26,11 @@ let listFn = args => {
   };
 };
 
-let println = args => {
+let print_helper = (~print_readably, args) => {
   switch (args) {
-  | [] => raise(Failure("Wrong args or function type"))
   | lst =>
     lst
-    |> List.map(Printer.pr_str(~print_readably=false))
+    |> List.map(Printer.pr_str(~print_readably))
     |> String.concat(" ")
     |> print_endline;
     Nil;
@@ -50,7 +40,7 @@ let println = args => {
 let read_str = args => {
   switch (args) {
   | [String(str)] => str |> Reader.read_str
-  | _ => raise(Failure("Wrong args or function type"))
+  | _ => raise(Failure("Wrong args or function type"));
   };
 };
 
@@ -95,6 +85,8 @@ let first = args => {
   switch (args) {
   | [List([fst, ..._rst])]
   | [Vector([fst, ..._rst])] => fst
+  | [List([])]
+  | [Vector([])] => Nil
   | [Nil] => Nil
   | _ => raise(Failure("first only works on lists or vectors or nil"))
   };
@@ -104,17 +96,19 @@ let rest = args => {
   switch (args) {
   | [List([_fst, ...rst])]
   | [Vector([_fst, ...rst])] => List(rst)
+  | [List([])]
+  | [Vector([])] => Nil
   | [Nil] => Nil
   | _ => raise(Failure("rest only works on lists or vectors or nil"))
   };
 };
 
-let rec nth = args => {
+let nth = args => {
   switch (args) {
-  | [List([fst, ..._rst]), Integer(0)]
-  | [Vector([fst, ..._rst]), Integer(0)] => fst
-  | [List([_fst, ...rst]), Integer(n)]
-  | [Vector([_fst, ...rst]), Integer(n)] => nth([List(rst), Integer(n - 1)])
+  | [List(lst), Integer(n)]
+  | [Vector(lst), Integer(n)] => try(List.nth(lst, n)) {
+      | _ => raise(MalException(String("Bounds error nth")));
+    }
   | [Nil] => Nil
   | _ => raise(Failure("rest only works on lists or vectors or nil"))
   };
@@ -244,15 +238,84 @@ let swapAtom = args => {
   };
 };
 
+let throw = args => {
+  switch (args) {
+  | [mt, ..._rest] => raise(MalException(mt))
+  | [] => raise(Failure("Must call throw with one arg"))
+  };
+};
+
+let apply = args => {
+  switch (args) {
+  | [Fn(f, _), ...args] =>
+    switch (List.rev(args)) {
+    | [List(lastArgToApply), ...reversedArgsToFn]
+    | [Vector(lastArgToApply), ...reversedArgsToFn] =>
+      f(List.rev(reversedArgsToFn) @ lastArgToApply)
+    | [] => f([])
+    | _ => raise(Failure("last argument to apply must be coll if present"))
+    }
+  | _ => raise(Failure("apply must be called with a function"))
+  };
+};
+
+let map = args => {
+  switch (args) {
+  | [Fn(f, _), Vector(mapArgs)]
+  | [Fn(f, _), List(mapArgs)] => List(List.map(arg => f([arg]), mapArgs))
+  | _ => raise(Failure("Invalid args to map"))
+  };
+};
+
+let isNil = args => {
+  switch (args) {
+  | [Nil] => True
+  | _ => False
+  };
+};
+
+let isTrue = args => {
+  switch (args) {
+  | [True] => True
+  | _ => False
+  };
+};
+
+let typeOf = args => {
+  switch (args) {
+  | [Symbol(_)] => String("symbol")
+  | [Vector(_)] => String("vector")
+  | [List(_)] => String("list")
+  | [HashMap(_)] => String("hashmap")
+  | [Integer(_)] => String("integer")
+  | [Fn(_, Function)] => String("function")
+  | [Fn(_, Macro)] => String("macro")
+  | [Nil] => String("nil")
+  | [Atom(_)] => String("atom")
+  | [True] => String("true")
+  | [False] => String("false")
+  | [String(_)] => String("string")
+  | [Keyword(_)] => String("keyword")
+  | _ => raise(MalException(String("wrong args to typeof")))
+  };
+};
+
+let isSymbol = args => {
+  switch (args) {
+  | [Symbol(_)] => True
+  | _ => False
+  };
+};
+
 let ns = [
   ("+", makeFn(numFun((+)))),
   ("-", makeFn(numFun((-)))),
   ("/", makeFn(numFun((/)))),
   ("*", makeFn(numFun(( * )))),
-  ("prn", makeFn(prn)),
+  ("prn", makeFn(print_helper(~print_readably=true))),
   ("str", makeFn(str)),
   ("pr-str", makeFn(pr_str)),
-  ("println", makeFn(println)),
+  ("println", makeFn(print_helper(~print_readably=false))),
   ("vec", makeFn(vec)),
   ("list", makeFn(listFn)),
   ("list?", makeFn(listQuestion)),
@@ -275,4 +338,11 @@ let ns = [
   ("deref", makeFn(derefAtom)),
   ("reset!", makeFn(resetAtom)),
   ("swap!", makeFn(swapAtom)),
+  ("throw", makeFn(throw)),
+  ("apply", makeFn(apply)),
+  ("map", makeFn(map)),
+  ("nil?", makeFn(isNil)),
+  ("true?", makeFn(isTrue)),
+  ("false?", makeFn(x => x |> isTrue |> mal_complement)),
+  ("symbol?", makeFn(x => x |> isSymbol)),
 ];
