@@ -20,13 +20,19 @@ let makeEnv = (env, binds, expr) => {
       }
   };
 
-  List.combine(binds, expr)
-  |> List.iter(((binding, expr)) =>
-       switch (binding, expr) {
-       | (Symbol(key), expr) => obj#set(key, expr)
-       | _ => ()
-       }
-     );
+  let rec set_helper = (binds, expr) =>
+    switch (binds, expr) {
+    | ([Symbol("&"), Symbol(key)], expr) =>
+      obj#set(key, List(expr));
+    | ([Symbol(key), ...rst_bindings], [expr, ...rst_exprs]) =>
+      obj#set(key, expr);
+      set_helper(rst_bindings, rst_exprs);
+    | ([], _) => ()
+    | (_, []) => raise(Failure("No expression for binding"))
+    | (_, _) => raise(Failure("Internal error"))
+    };
+
+  set_helper(binds, expr);
 
   obj;
 };

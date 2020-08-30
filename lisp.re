@@ -91,6 +91,7 @@ let rec eval = (ast, repl_env) => {
     | Nil => Nil
     | _ => eval(then_, repl_env)
     }
+  | List([Symbol("fn*"), Vector(bindings), body])
   | List([Symbol("fn*"), List(bindings), body]) =>
     makeFn(args => eval(body, Env.makeEnv(Some(repl_env), bindings, args)))
 

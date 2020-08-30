@@ -97,8 +97,8 @@ let rest = args => {
   | [List([_fst, ...rst])]
   | [Vector([_fst, ...rst])] => List(rst)
   | [List([])]
-  | [Vector([])] => Nil
-  | [Nil] => Nil
+  | [Vector([])]
+  | [Nil] => List([])
   | _ => raise(Failure("rest only works on lists or vectors or nil"))
   };
 };
