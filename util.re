@@ -35,10 +35,6 @@ let partition2 = lst => {
   acc([], lst);
 };
 
-let rec zip = (lst1, lst2) =>
-  switch (lst1, lst2) {
-  | ([], _)
-  | (_, []) => raise(Failure("Unequal lists in zip"))
-  | ([fst1, ...rst1], [fst2, ...rst2]) =>
-    [(fst1, fst2)] @ zip(rst1, rst2)
-  };
+/* let partition = (n, lst) => { */
+/*   let acc = (n, accumulated, remaining,  ) */
+/* } */

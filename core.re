@@ -1,4 +1,5 @@
 open Types.MalType;
+module MalMap = Types.MalMap;
 
 let makeFn = Types.makeFn;
 
@@ -9,18 +10,20 @@ let numFun = (f, args) => {
   };
 };
 
-let str_helper = (~print_readably=false, args) => {
+let str_helper = (~print_readably=false, seperator, args) => {
   switch (args) {
   | [] => raise(Failure("Wrong args or function type"))
   | lst =>
     String(
-      lst |> List.map(Printer.pr_str(~print_readably)) |> String.concat(""),
+      lst
+      |> List.map(Printer.pr_str(~print_readably))
+      |> String.concat(seperator),
     )
   };
 };
 
-let str = str_helper;
-let pr_str = str_helper(~print_readably=true);
+let str = str_helper("");
+let pr_str = str_helper(~print_readably=true, " ");
 
 let listFn = args => {
   switch (args) {
@@ -149,7 +152,6 @@ type computationEnded =
   | EqualityComplete(Types.MalType.t)
   | InProgress(list(Types.MalType.t));
 
-// Very Nice dual with apply
 let rec equal = args => {
   switch (args) {
   | [Vector(lst), Vector(lst2)]
@@ -164,7 +166,18 @@ let rec equal = args => {
   | [False, False] => True
   | [Nil, Nil] => True
   | [String(s1), String(s2)] => String.compare(s1, s2) == 0 ? True : False
-  // This is missing support for Strings, Vectors and HashMaps
+  | [HashMap(m1), HashMap(m2)] =>
+    // This could be done better
+    MalMap.equal(
+      (v1, v2) =>
+        switch (equal([v1, v2])) {
+        | True => true
+        | _ => false
+        },
+      m1,
+      m2,
+    )
+      ? True : False
   | _ => False
   };
 }
@@ -310,6 +323,118 @@ let isSymbol = args => {
   };
 };
 
+let symbol = args => {
+  switch (args) {
+  | [String(s)] => Symbol(s)
+  | _ => raise(Failure("wrong args to symbol"))
+  };
+};
+
+let keyword = args => {
+  switch (args) {
+  | [String(s)] => Keyword(":" ++ s)
+  | [Keyword(s)] => Keyword(s)
+  | _ => raise(Failure("wrong args to keyword"))
+  };
+};
+
+let isKeyword = args => {
+  switch (args) {
+  | [Keyword(_)] => True
+  | _ => False
+  };
+};
+
+let vector = args => {
+  switch (args) {
+  | lst => Vector(lst)
+  };
+};
+
+let isVector = args => {
+  switch (args) {
+  | [Vector(_)] => True
+  | _ => False
+  };
+};
+
+let isSequential = args => {
+  switch (args) {
+  | [Vector(_)] => True
+  | [List(_)] => True
+  | _ => False
+  };
+};
+
+let hashMap = args => {
+  let m =
+    args
+    |> Util.partition2
+    |> List.fold_left((acc, (k, v)) => MalMap.add(k, v, acc), MalMap.empty);
+  HashMap(m);
+};
+
+let isMap = args => {
+  switch (args) {
+  | [HashMap(_)] => True
+  | _ => False
+  };
+};
+
+let assoc = args => {
+  switch (args) {
+  | [HashMap(m), ...rst] =>
+    let m =
+      rst
+      |> Util.partition2
+      |> List.fold_left((acc, (k, v)) => MalMap.add(k, v, acc), m);
+    HashMap(m);
+  | _ => raise(Failure("Wrong args to assoc"))
+  };
+};
+
+let dissoc = args => {
+  switch (args) {
+  | [HashMap(m), ...rst] =>
+    let m = rst |> List.fold_left((acc, k) => MalMap.remove(k, acc), m);
+    HashMap(m);
+  | _ => raise(Failure("Wrong args to dissoc"))
+  };
+};
+
+let get = args => {
+  switch (args) {
+  | [HashMap(m), k] =>
+    switch (MalMap.find_opt(k, m)) {
+    | Some(v) => v
+    | None => Nil
+    }
+  | [Nil, _] => Nil
+  | _ => raise(Failure("Wrong args to get"))
+  };
+};
+
+let contains = args => {
+  switch (args) {
+  | [HashMap(m), k] =>
+    switch (MalMap.find_opt(k, m)) {
+    | Some(_) => True
+    | None => False
+    }
+  | _ => raise(Failure("Wrong args to contains"))
+  };
+};
+
+let extractBindingsHelper = (f, args) => {
+  switch (args) {
+  | [HashMap(m)] =>
+    let ret = m |> MalMap.bindings |> List.map(f);
+    List(ret);
+  | _ => raise(Failure("Wrong args to keys"))
+  };
+};
+
+// Todo redo this by mapping over second element
 let ns = [
   ("+", makeFn(numFun((+)))),
   ("-", makeFn(numFun((-)))),
@@ -347,5 +472,19 @@ let ns = [
   ("nil?", makeFn(isNil)),
   ("true?", makeFn(isTrue)),
   ("false?", makeFn(x => x |> isTrue |> mal_complement)),
+  ("symbol", makeFn(x => x |> symbol)),
   ("symbol?", makeFn(x => x |> isSymbol)),
+  ("keyword", makeFn(x => x |> keyword)),
+  ("keyword?", makeFn(x => x |> isKeyword)),
+  ("vector", makeFn(x => x |> vector)),
+  ("vector?", makeFn(x => x |> isVector)),
+  ("sequential?", makeFn(x => x |> isSequential)),
+  ("hash-map", makeFn(x => x |> hashMap)),
+  ("map?", makeFn(x => x |> isMap)),
+  ("assoc", makeFn(x => x |> assoc)),
+  ("dissoc", makeFn(x => x |> dissoc)),
+  ("get", makeFn(x => x |> get)),
+  ("contains?", makeFn(x => x |> contains)),
+  ("vals", makeFn(x => x |> extractBindingsHelper(snd))),
+  ("keys", makeFn(x => x |> extractBindingsHelper(fst))),
 ];
