@@ -1,4 +1,7 @@
-open Types;
+
+
+module M = Types.MalMap
+open Types.MalType
 
 let rec pr_str = (~print_readably=false, form) =>
   switch (form) {
@@ -14,8 +17,8 @@ let rec pr_str = (~print_readably=false, form) =>
   | HashMap(hm) =>
     [
       "{",
-      StringMap.bindings(hm)
-      |> List.map(pr_str_hash_tuple)
+      M.bindings(hm)
+      |> List.map(tup => pr_str_hash_tuple(~print_readably, tup))
       |> String.concat(" "),
       "}",
     ]
@@ -27,6 +30,6 @@ let rec pr_str = (~print_readably=false, form) =>
   | Atom(_) => "#<atom>"
   | String(s) =>  print_readably ? "\"" ++ (String.escaped(s)) ++ "\"" : s
   }
-and pr_str_hash_tuple = ((k, v)) => {
-  k ++ " " ++ pr_str(v);
+and pr_str_hash_tuple = (~print_readably=false, (k, v)) => {
+  pr_str(~print_readably,k) ++ " " ++ pr_str(~print_readably, v);
 };

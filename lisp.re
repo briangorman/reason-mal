@@ -1,4 +1,6 @@
-open Types;
+open Types.MalType;
+
+module M = Types.MalMap;
 
 let repl_env = Env.makeEnv(None, [], []);
 
@@ -45,11 +47,11 @@ let rec eval = (ast, repl_env) => {
   | List([]) => ast
   | List([Symbol("try*"), a, List([Symbol("catch*"), b, c])]) =>
     try(eval(a, repl_env)) {
-    | MalException(mt) =>
+    | Types.MalException(mt) =>
       let newEnv = Env.makeEnv(Some(repl_env), [b], [mt]);
       eval(c, newEnv);
     | Failure(s)
-    | KeyNotFound(s)
+    | Types.KeyNotFound(s)
     | Invalid_argument(s) =>
       // Typing into bindings could be improved
       let newEnv = Env.makeEnv(Some(repl_env), [b], [String(s)]);
@@ -67,8 +69,7 @@ let rec eval = (ast, repl_env) => {
     let value =
       switch (eval(expr, repl_env)) {
       | Fn(fn, Function) => Fn(fn, Macro)
-      | _ =>
-        raise(MalException(String("Input to defmacro must be a function")))
+      | _ => raise(Failure("Input to defmacro must be a function"))
       };
     repl_env#set(k, value);
     value;
@@ -93,18 +94,15 @@ let rec eval = (ast, repl_env) => {
     }
   | List([Symbol("fn*"), Vector(bindings), body])
   | List([Symbol("fn*"), List(bindings), body]) =>
-    makeFn(args => eval(body, Env.makeEnv(Some(repl_env), bindings, args)))
+    Types.makeFn(args =>
+      eval(body, Env.makeEnv(Some(repl_env), bindings, args))
+    )
 
   | List(_) =>
     switch (eval_ast(ast, repl_env)) {
     | List([Fn(fn, Function), ...args]) => fn(args)
 
-    | _ =>
-      raise(
-        MalException(
-          String("Function not in first position in apply phase"),
-        ),
-      )
+    | _ => raise(Failure("Function not in first position in apply phase"))
     }
   | ast => eval_ast(ast, repl_env)
   };
@@ -114,7 +112,7 @@ and eval_ast = (ast, repl_env) => {
   | Symbol(s) => repl_env#get(s)
   | List(lst) => List(List.map(ast => eval(ast, repl_env), lst))
   | Vector(lst) => Vector(List.map(ast => eval(ast, repl_env), lst))
-  | HashMap(hm) => HashMap(StringMap.map(ast => eval(ast, repl_env), hm))
+  | HashMap(hm) => HashMap(M.map(ast => eval(ast, repl_env), hm))
   | _ => ast
   };
 }
@@ -129,12 +127,7 @@ and createEnvWithBindings = (bindings, oldEnv) => {
       newEnv#set(key, eval(expr, newEnv));
       acc(rest);
     | [] => ()
-    | _ =>
-      raise(
-        MalException(
-          String("let* bindings require an even number of forms"),
-        ),
-      )
+    | _ => raise(Failure("let* bindings require an even number of forms"))
     };
   acc(bindings);
   newEnv;
@@ -143,12 +136,11 @@ and createEnvWithBindings = (bindings, oldEnv) => {
 let eval_fn = args => {
   switch (args) {
   | [ast] => eval(ast, repl_env)
-
-  | _ => raise(MalException(String("Wrong args or function type")))
+  | _ => raise(Failure("Wrong args or function type"))
   };
 };
 
-repl_env#set("eval", makeFn(eval_fn));
+repl_env#set("eval", Types.makeFn(eval_fn));
 
 let print = form => Printer.pr_str(~print_readably=true, form);
 
@@ -169,10 +161,10 @@ let rec main = () => {
   switch (read_line()) {
   | input_line =>
     try(input_line |> rep |> print_endline) {
-    | KeyNotFound(s)
+    | Types.KeyNotFound(s)
     | Invalid_argument(s)
     | Failure(s) => print_endline(s)
-    | MalException(mt) =>
+    | Types.MalException(mt) =>
       print_endline(
         "Uncaught mal exception: " ++ Printer.pr_str(~print_readably=true, mt),
       )

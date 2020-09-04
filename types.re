@@ -1,25 +1,35 @@
 exception KeyNotFound(string);
 
-module StringMap = Map.Make(String);
+module rec MalType: {
+  type fnType =
+    | Function
+    | Macro;
 
-type fnType =
-  | Function
-  | Macro;
+  type t =
+    | List(list(t))
+    | Vector(list(t))
+    | Symbol(string)
+    | Keyword(string)
+    | String(string)
+    | Integer(int)
+    | HashMap(MalMap.t(t))
+    | Fn(list(t) => t, fnType)
+    | Atom(ref(t))
+    | Nil
+    | True
+    | False;
 
-type malType =
-  | List(list(malType))
-  | Vector(list(malType))
-  | Symbol(string)
-  | Keyword(string)
-  | String(string)
-  | Integer(int)
-  | HashMap(StringMap.t(malType))
-  | Fn(list(malType) => malType, fnType)
-  | Atom(ref(malType))
-  | Nil
-  | True
-  | False;
+} = MalType
+and
+  MalComparable: {
+  type t = MalType.t;
+  let compare: (t,t) => int;
+}  = {
+  type t = MalType.t;
+  let compare = Stdlib.compare
+}
+and MalMap: Map.S with type key = MalComparable.t = Map.Make(MalComparable);
 
-exception MalException(malType);
+exception MalException(MalType.t);
 
-let makeFn = x => Fn(x, Function);
+let makeFn = x => MalType.Fn(x, Function);

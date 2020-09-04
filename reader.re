@@ -1,4 +1,5 @@
-module T = Types;
+module T = Types.MalType;
+module MalMap = Types.MalMap;
 
 let malRegex =
   Pcre.regexp(
@@ -84,12 +85,12 @@ and read_hashmap = readerObj => {
         |> List.fold_left(
              (acc, (k, v)) =>
                switch (k) {
-               | T.Symbol(s) => T.StringMap.add(s, v, acc)
-               | T.Keyword(s) => T.StringMap.add(s, v, acc)
+               | T.String(_) => MalMap.add(k, v, acc)
+               | T.Keyword(_) => MalMap.add(k, v, acc)
                | _ =>
-                 raise(Failure("Only keys and symbols can be added to maps"))
+                 raise(Failure("Only keys and can be added to maps"))
                },
-             T.StringMap.empty,
+             MalMap.empty,
            );
       T.HashMap(hm);
     | _form =>

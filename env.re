@@ -1,12 +1,12 @@
 module M = Map.Make(String);
 
-open Types;
+open Types.MalType
 
 let makeEnv = (env, binds, expr) => {
   let data = ref(M.empty);
 
   let obj = {
-    pub set = (k: string, v: Types.malType) => data := M.add(k, v, data^);
+    pub set = (k: string, v: t) => data := M.add(k, v, data^);
     pub find = k =>
       switch (M.find_opt(k, data^), env) {
       | (Some(v), _) => Some(v)

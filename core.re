@@ -1,15 +1,17 @@
-open Types;
+open Types.MalType;
+
+let makeFn = Types.makeFn;
 
 let numFun = (f, args) => {
   switch (args) {
   | [Integer(a), Integer(b)] => Integer(f(a, b))
-  | _ => raise(Failure("Wrong args or function type to numfun"));
+  | _ => raise(Failure("Wrong args or function type to numfun"))
   };
 };
 
 let str_helper = (~print_readably=false, args) => {
   switch (args) {
-  | [] => raise(Failure("Wrong args or function type"));
+  | [] => raise(Failure("Wrong args or function type"))
   | lst =>
     String(
       lst |> List.map(Printer.pr_str(~print_readably)) |> String.concat(""),
@@ -40,7 +42,7 @@ let print_helper = (~print_readably, args) => {
 let read_str = args => {
   switch (args) {
   | [String(str)] => str |> Reader.read_str
-  | _ => raise(Failure("Wrong args or function type"));
+  | _ => raise(Failure("Wrong args or function type"))
   };
 };
 
@@ -106,8 +108,9 @@ let rest = args => {
 let nth = args => {
   switch (args) {
   | [List(lst), Integer(n)]
-  | [Vector(lst), Integer(n)] => try(List.nth(lst, n)) {
-      | _ => raise(MalException(String("Bounds error nth")));
+  | [Vector(lst), Integer(n)] =>
+    try(List.nth(lst, n)) {
+    | _ => raise(Failure("Bounds error nth"))
     }
   | [Nil] => Nil
   | _ => raise(Failure("rest only works on lists or vectors or nil"))
@@ -143,8 +146,8 @@ let vec = args => {
 };
 
 type computationEnded =
-  | EqualityComplete(malType)
-  | InProgress(list(malType));
+  | EqualityComplete(Types.MalType.t)
+  | InProgress(list(Types.MalType.t));
 
 // Very Nice dual with apply
 let rec equal = args => {
@@ -240,7 +243,7 @@ let swapAtom = args => {
 
 let throw = args => {
   switch (args) {
-  | [mt, ..._rest] => raise(MalException(mt))
+  | [mt, ..._rest] => raise(Types.MalException(mt))
   | [] => raise(Failure("Must call throw with one arg"))
   };
 };
@@ -296,7 +299,7 @@ let typeOf = args => {
   | [False] => String("false")
   | [String(_)] => String("string")
   | [Keyword(_)] => String("keyword")
-  | _ => raise(MalException(String("wrong args to typeof")))
+  | _ => raise(Failure("wrong args to typeof"))
   };
 };
 
