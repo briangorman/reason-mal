@@ -158,24 +158,39 @@ rep(
 
 rep("(println (str \"Mal [\" *host-language* \"]\"))");
 
-let rec main = () => {
-  print_string("user> ");
-  switch (read_line()) {
-  | input_line =>
-    try(input_line |> rep |> print_endline) {
-    | Types.KeyNotFound(s)
-    | Invalid_argument(s)
-    | Failure(s) => print_endline(s)
-    | Types.MalException(mt) =>
-      print_endline(
-        "Uncaught mal exception: " ++ Printer.pr_str(~print_readably=true, mt),
-      )
-    | Stdlib.Scanf.Scan_failure(s) => print_endline(s)
-    | _ => print_endline("Unhandled exception from within....")
-    };
-    main();
-  | exception End_of_file => ()
-  };
-};
+Sys.argv;
 
-main();
+let argLength = Array.length(Sys.argv);
+
+if (argLength > 1) {
+  if (argLength > 2) {
+    let argv =
+      Array.sub(Sys.argv, 2, argLength - 2)
+      |> Array.fold_left((acc, next) => acc @ [String(next)], []);
+    repl_env#set("*argv*", List(argv));
+  };
+  rep("(load-file \"" ++ Sys.argv[1] ++ "\")") |> ignore;
+} else {
+  let rec main = () => {
+    print_string("user> ");
+    switch (read_line()) {
+    | input_line =>
+      try(input_line |> rep |> print_endline) {
+      | Types.KeyNotFound(s)
+      | Invalid_argument(s)
+      | Failure(s) => print_endline(s)
+      | Types.MalException(mt) =>
+        print_endline(
+          "Uncaught mal exception: "
+          ++ Printer.pr_str(~print_readably=true, mt),
+        )
+      | Stdlib.Scanf.Scan_failure(s) => print_endline(s)
+      | _ => print_endline("Unhandled exception from within....")
+      };
+      main();
+    | exception End_of_file => ()
+    };
+  };
+
+  main();
+};
