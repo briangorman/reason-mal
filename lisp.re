@@ -156,6 +156,8 @@ rep(
   "(defmacro! cond (fn* (& xs) (if (> (count xs) 0) (list 'if (first xs) (if (> (count xs) 1) (nth xs 1) (throw \"odd number of forms to cond\")) (cons 'cond (rest (rest xs)))))))",
 );
 
+rep("(println (str \"Mal [\" *host-language* \"]\"))");
+
 let rec main = () => {
   print_string("user> ");
   switch (read_line()) {

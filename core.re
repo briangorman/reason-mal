@@ -434,6 +434,45 @@ let extractBindingsHelper = (f, args) => {
   };
 };
 
+let isString = args => {
+  switch (args) {
+  | [String(_)] => True
+  | _ => False
+  };
+};
+
+let isNumber = args => {
+  switch (args) {
+  | [Integer(_)] => True
+  | _ => False
+  };
+};
+
+let isFn = args => {
+  switch (args) {
+  | [Fn(_, Function)] => True
+  | _ => False
+  };
+};
+
+let isMacro = args => {
+  switch (args) {
+  | [Fn(_, Macro)] => True
+  | _ => False
+  };
+};
+
+let notImplemented = _ => raise(Failure("Not implemented"));
+
+let readline = args => {
+  switch (args) {
+  | [String(s)] =>
+    print_string(s);
+    String(read_line());
+  | _ => raise(Failure("wrong args to readline"))
+  };
+};
+
 // Todo redo this by mapping over second element
 let ns = [
   ("+", makeFn(numFun((+)))),
@@ -472,19 +511,31 @@ let ns = [
   ("nil?", makeFn(isNil)),
   ("true?", makeFn(isTrue)),
   ("false?", makeFn(x => x |> isTrue |> mal_complement)),
-  ("symbol", makeFn(x => x |> symbol)),
-  ("symbol?", makeFn(x => x |> isSymbol)),
-  ("keyword", makeFn(x => x |> keyword)),
-  ("keyword?", makeFn(x => x |> isKeyword)),
-  ("vector", makeFn(x => x |> vector)),
-  ("vector?", makeFn(x => x |> isVector)),
-  ("sequential?", makeFn(x => x |> isSequential)),
-  ("hash-map", makeFn(x => x |> hashMap)),
-  ("map?", makeFn(x => x |> isMap)),
-  ("assoc", makeFn(x => x |> assoc)),
-  ("dissoc", makeFn(x => x |> dissoc)),
-  ("get", makeFn(x => x |> get)),
-  ("contains?", makeFn(x => x |> contains)),
+  ("symbol", makeFn(symbol)),
+  ("symbol?", makeFn(isSymbol)),
+  ("keyword", makeFn(keyword)),
+  ("keyword?", makeFn(isKeyword)),
+  ("vector", makeFn(vector)),
+  ("vector?", makeFn(isVector)),
+  ("sequential?", makeFn(isSequential)),
+  ("hash-map", makeFn(hashMap)),
+  ("map?", makeFn(isMap)),
+  ("assoc", makeFn(assoc)),
+  ("dissoc", makeFn(dissoc)),
+  ("get", makeFn(get)),
+  ("contains?", makeFn(contains)),
   ("vals", makeFn(x => x |> extractBindingsHelper(snd))),
   ("keys", makeFn(x => x |> extractBindingsHelper(fst))),
+  ("string?", makeFn(isString)),
+  ("number?", makeFn(isNumber)),
+  ("fn?", makeFn(isFn)),
+  ("macro?", makeFn(isMacro)),
+  ("time-ms", makeFn(notImplemented)),
+  ("meta", makeFn(notImplemented)),
+  ("meta", makeFn(notImplemented)),
+  ("with-meta", makeFn(notImplemented)),
+  ("seq", makeFn(notImplemented)),
+  ("conj", makeFn(notImplemented)),
+  ("*host-language*", String("reasonml")),
+  ("readline", makeFn(readline)),
 ];
