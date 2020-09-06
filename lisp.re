@@ -151,26 +151,20 @@ let loadFileDefinition = "(def! load-file (fn* (f) (eval (read-string (str \"(do
 rep(loadFileDefinition);
 rep("(def! not (fn* (a) (if a false true)))");
 
-// Cond needs variadic function definition to work.... I don't have this defined yet
 rep(
   "(defmacro! cond (fn* (& xs) (if (> (count xs) 0) (list 'if (first xs) (if (> (count xs) 1) (nth xs 1) (throw \"odd number of forms to cond\")) (cons 'cond (rest (rest xs)))))))",
 );
 
-rep("(println (str \"Mal [\" *host-language* \"]\"))");
-
-Sys.argv;
-
 let argLength = Array.length(Sys.argv);
 
 if (argLength > 1) {
-  if (argLength > 2) {
-    let argv =
-      Array.sub(Sys.argv, 2, argLength - 2)
-      |> Array.fold_left((acc, next) => acc @ [String(next)], []);
-    repl_env#set("*argv*", List(argv));
-  };
+  let argv =
+    Array.sub(Sys.argv, 2, argLength - 2)
+    |> Array.fold_left((acc, next) => acc @ [String(next)], []);
+  repl_env#set("*ARGV*", List(argv));
   rep("(load-file \"" ++ Sys.argv[1] ++ "\")") |> ignore;
 } else {
+  rep("(println (str \"Mal [\" *host-language* \"]\"))") |> ignore;
   let rec main = () => {
     print_string("user> ");
     switch (read_line()) {

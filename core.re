@@ -12,7 +12,7 @@ let numFun = (f, args) => {
 
 let str_helper = (~print_readably=false, seperator, args) => {
   switch (args) {
-  | [] => raise(Failure("Wrong args or function type"))
+  | [] => String("")
   | lst =>
     String(
       lst
@@ -61,16 +61,18 @@ let slurp = args => {
   };
 };
 
-let listQuestion = args => {
+let isList = args => {
   switch (args) {
   | [List(_)] => True
-  | _ => raise(Failure("Too many parameters passed to list?"))
+  | _ => False
   };
 };
 
 let listEmpty = args => {
   switch (args) {
+  | [Vector([])]
   | [List([])] => True
+  | [Vector(_some)]
   | [List(_some)] => False
   | _ => raise(Failure("Not a list!"))
   };
@@ -155,6 +157,8 @@ type computationEnded =
 let rec equal = args => {
   switch (args) {
   | [Vector(lst), Vector(lst2)]
+  | [List(lst), Vector(lst2)]
+  | [Vector(lst), List(lst2)]
   | [List(lst), List(lst2)] =>
     switch (equal_list(lst, lst2)) {
     | EqualityComplete(complete) => complete
@@ -165,6 +169,7 @@ let rec equal = args => {
   | [True, True] => True
   | [False, False] => True
   | [Nil, Nil] => True
+  | [Keyword(s1), Keyword(s2)]
   | [String(s1), String(s2)] => String.compare(s1, s2) == 0 ? True : False
   | [HashMap(m1), HashMap(m2)] =>
     // This could be done better
@@ -485,7 +490,7 @@ let ns = [
   ("println", makeFn(print_helper(~print_readably=false))),
   ("vec", makeFn(vec)),
   ("list", makeFn(listFn)),
-  ("list?", makeFn(listQuestion)),
+  ("list?", makeFn(isList)),
   ("empty?", makeFn(listEmpty)),
   ("count", makeFn(count)),
   ("first", makeFn(first)),

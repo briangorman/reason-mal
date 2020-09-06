@@ -37,18 +37,25 @@ let read_atom = token => {
   };
 };
 
-let rec read_form = readerObj =>
+let rec read_form = readerObj => {
   switch (readerObj#peek()) {
   | "@" => handleReaderMacro("deref", readerObj)
   | "'" => handleReaderMacro("quote", readerObj)
   | "`" => handleReaderMacro("quasiquote", readerObj)
-  | "~@" => handleReaderMacro("splice-unquote", readerObj);
+  | "~@" => handleReaderMacro("splice-unquote", readerObj)
   | "~" => handleReaderMacro("unquote", readerObj)
   | "(" => read_list(readerObj)
   | "[" => read_vector(readerObj)
   | "{" => read_hashmap(readerObj)
-  | atom => read_atom(atom)
-  }
+  | atom =>
+    if (atom.[0] == ';') {
+      readerObj#next() |> ignore;
+      read_form(readerObj);
+    } else {
+      read_atom(atom);
+    }
+  };
+}
 and read_list = readerObj => {
   let rec accumulator = lst => {
     switch (readerObj#peek()) {
@@ -87,8 +94,7 @@ and read_hashmap = readerObj => {
                switch (k) {
                | T.String(_) => MalMap.add(k, v, acc)
                | T.Keyword(_) => MalMap.add(k, v, acc)
-               | _ =>
-                 raise(Failure("Only keys and can be added to maps"))
+               | _ => raise(Failure("Only keys and can be added to maps"))
                },
              MalMap.empty,
            );
