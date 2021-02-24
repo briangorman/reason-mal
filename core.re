@@ -478,7 +478,43 @@ let readline = args => {
   };
 };
 
-// Todo redo this by mapping over second element
+let timeMs = args => {
+  switch (args) {
+  | [] => Integer((Unix.time() |> int_of_float) * 1000)
+  | _ => raise(Failure("wrong args to time-ms"))
+  };
+};
+
+let stringToSeqHelper = str => {
+  str
+  |> String.to_seq
+  |> Seq.fold_left(
+       (acc, next) => acc @ [String(String.make(1, next))],
+       [],
+     );
+};
+
+let seq = args => {
+  switch (args) {
+  | [List([])]
+  | [Vector([])]
+  | [String("")]
+  | [Nil] => Nil
+  | [Vector(lst)]
+  | [List(lst)] => List(lst)
+  | [String(s)] => List(stringToSeqHelper(s))
+  | _ => raise(Failure("wrong args to seq"))
+  };
+};
+
+let conj = args => {
+  switch (args) {
+  | [Vector(v), ...args] => Vector(v @ args)
+  | [List(lst), ...args] => List(args @ lst)
+  | _ => raise(Failure("wrong args to conj"))
+  };
+};
+
 let ns = [
   ("+", makeFn(numFun((+)))),
   ("-", makeFn(numFun((-)))),
@@ -535,12 +571,12 @@ let ns = [
   ("number?", makeFn(isNumber)),
   ("fn?", makeFn(isFn)),
   ("macro?", makeFn(isMacro)),
-  ("time-ms", makeFn(notImplemented)),
+  ("time-ms", makeFn(timeMs)),
   ("meta", makeFn(notImplemented)),
   ("meta", makeFn(notImplemented)),
   ("with-meta", makeFn(notImplemented)),
-  ("seq", makeFn(notImplemented)),
-  ("conj", makeFn(notImplemented)),
+  ("seq", makeFn(seq)),
+  ("conj", makeFn(conj)),
   ("*host-language*", String("reasonml")),
   ("readline", makeFn(readline)),
 ];

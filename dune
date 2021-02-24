@@ -4,4 +4,4 @@
 
 (executable
  (name lisp)
- (libraries pcre))
+ (libraries pcre unix))

@@ -60,7 +60,7 @@ let rec eval = (ast, repl_env) => {
   | List([Symbol("quote"), arg]) => arg
   | List([Symbol("macroexpand"), arg]) => macroexpand(arg, repl_env)
   | List([Symbol("quasiquoteexpand"), arg]) => quasiquote(arg)
-  | List([Symbol("quasiquote"), arg]) => eval(quasiquote(arg), repl_env) // Todo flip args of eval
+  | List([Symbol("quasiquote"), arg]) => eval(quasiquote(arg), repl_env)
   | List([Symbol("def!"), Symbol(k), expr]) =>
     let value = eval(expr, repl_env);
     repl_env#set(k, value);
