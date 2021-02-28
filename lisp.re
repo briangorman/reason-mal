@@ -76,7 +76,7 @@ let rec eval = (ast, repl_env) => {
 
   | List([Symbol("let*"), List(bindings), body])
   | List([Symbol("let*"), Vector(bindings), body]) =>
-    let newEnv = createEnvWithBindings(bindings, repl_env);
+    let newEnv = createEnvFromLetBindings(bindings, repl_env);
     eval(body, newEnv);
   | List([Symbol("do"), ...body]) =>
     List.fold_left((_acc, next) => eval(next, repl_env), Nil, body)
@@ -116,9 +116,7 @@ and eval_ast = (ast, repl_env) => {
   | _ => ast
   };
 }
-and createEnvWithBindings = (bindings, oldEnv) => {
-  // Initial function created to support let bindings....
-  // Look into replacing this asap
+and createEnvFromLetBindings = (bindings, oldEnv) => {
   let newEnv = Env.makeEnv(Some(oldEnv), [], []);
 
   let rec acc = lst =>
@@ -144,7 +142,6 @@ repl_env#set("eval", Types.makeFn(eval_fn));
 
 let print = form => Printer.pr_str(~print_readably=true, form);
 
-// Todo, ocamlize the function signatures to allow for |>
 let rep = str => print(eval(read(str), repl_env));
 
 let loadFileDefinition = "(def! load-file (fn* (f) (eval (read-string (str \"(do \" (slurp f) \"nil)\")))))";

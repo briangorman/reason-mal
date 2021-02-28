@@ -573,7 +573,6 @@ let ns = [
   ("macro?", makeFn(isMacro)),
   ("time-ms", makeFn(timeMs)),
   ("meta", makeFn(notImplemented)),
-  ("meta", makeFn(notImplemented)),
   ("with-meta", makeFn(notImplemented)),
   ("seq", makeFn(seq)),
   ("conj", makeFn(conj)),

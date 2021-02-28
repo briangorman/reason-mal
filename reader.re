@@ -22,10 +22,8 @@ let read_atom = token => {
     switch (t.[0]) {
     | ':' => T.Keyword(t)
     | '"' =>
-      let strLen = String.length(t);
-      // Doesn't handle uneven strings correctly
       isStringLiteral(t)
-        ? T.String(Scanf.unescaped(String.sub(t, 1, strLen - 2)))
+      ? T.String(Scanf.unescaped(String.sub(t, 1, String.length(t) - 2)))
         : raise(Failure("Invalid string"));
 
     | _ =>
