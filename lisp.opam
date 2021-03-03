@@ -1,0 +1,10 @@
+opam-version: "2.0"
+name: "lisp"
+authors: "Brian Gorman"
+dev-repo: "git+ssh://git@github.com:briangorman/reason-mal.git"
+version: "0.1"
+depends: [
+  "dune" {build}
+  "pcre" {build}
+  "reason" {build}
+]
