@@ -23,8 +23,10 @@ let read_atom = token => {
     | ':' => T.Keyword(t)
     | '"' =>
       isStringLiteral(t)
-      ? T.String(Scanf.unescaped(String.sub(t, 1, String.length(t) - 2)))
-        : raise(Failure("Invalid string"));
+        ? T.String(
+            Scanf.unescaped(String.sub(t, 1, String.length(t) - 2)),
+          )
+        : raise(Failure("Invalid string"))
 
     | _ =>
       switch (int_of_string_opt(t)) {
@@ -119,6 +121,11 @@ let tokenize = str =>
 
 let read_str = str => {
   let tokens = tokenize(str);
+
+  if (Array.mem("\"", tokens)) {
+    raise(Failure("Error: Unbalanced string"));
+  };
+
   let index = ref(0);
   let reader = {
     as _;
